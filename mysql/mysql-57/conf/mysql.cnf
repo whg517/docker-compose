@@ -1,0 +1,22 @@
+[client]
+default-character-set=utf8mb4
+
+[mysql]
+default-character-set=utf8mb4
+
+[mysqld]
+character-set-server=utf8mb4
+
+# 跳过验证密码，在忘记 root 密码时可打开次选项进行无密登录。生产环境请删除此行！！！
+# skip-grant-tables 
+
+skip-host-cache
+
+
+# 禁止MySQL对外部连接进行DNS解析，使用这一选项可以消除MySQL进行DNS解析的时间。
+# 但需要注意，如果开启该选项，则所有远程主机连接授权都要使用IP地址方式，否则MySQL将无法正常处理连接请求！docker默认解析docker name或者service为ip，这样mysql就不用解析了
+skip-name-resolve
+
+
+max_connections = 1500
+# MySQL的最大连接数

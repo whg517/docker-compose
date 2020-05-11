@@ -1,0 +1,27 @@
+version: "3.7"
+services:
+  mysql57:
+    image: mysql:5.7
+    container_name: mysql-5.7
+    env_file: ${PWD}/.env
+    ports:
+      - 3306:3306
+    networks:
+      - database
+    volumes:
+      - /data/mysql/data:/var/lib/mysql
+      - /data/mysql/mysql-files:/var/lib/mysql-files
+      - ${PWD}/conf:/etc/mysql/conf.d
+
+  adminer:
+    image: adminer
+    networks:
+      - database
+    ports:
+      - 8008:8080
+
+networks:
+  database:
+    name: database
+    external: true
+    attachable: true

@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  jenkins:
+    user: root
+    container_name: jenkins
+    image: jenkinsci/blueocean
+    ports:
+      - 8085:8080
+    volumes:
+      - "/data/docker/jenkins:/var/jenkins_home"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/home/kevin/workspaces/develop:/home"

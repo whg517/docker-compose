@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+    logstash:
+        image: logstash:7.6.2
+        container_name: logstash
+        volumes: 
+            - ./pipeline:/usr/share/logstash/pipeline
+            - ./config/logstash.yml:/usr/share/logstash/config/logstash.yml

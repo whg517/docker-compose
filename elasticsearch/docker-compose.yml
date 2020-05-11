@@ -1,0 +1,39 @@
+version: "3.7"
+services:
+  es73:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
+    container_name: es73
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - transport.host=127.0.0.1  # https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html#dev-vs-prod-mode
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata01:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - esnet
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.3.2
+    environment:
+      ELASTICSEARCH_HOSTS: http://es73:9200
+    networks:
+      - esnet
+    ports:
+      - 5601:5601
+
+volumes:
+  esdata01:
+    driver: local
+  esdata02:
+    driver: local
+
+networks:
+  esnet:
+
+

@@ -1,0 +1,10 @@
+version: "3.7"
+
+services:
+  gitlab-runner:
+    container_name: gitlab-runner
+    image: gitlab/gitlab-runner:latest
+    ports:
+      - 8093:8093
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
