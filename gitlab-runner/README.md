@@ -34,7 +34,9 @@ gitlab-runner register \
 参考 [Use Docker socket binding](https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#use-docker-socket-binding)
 
 这里指定参数 `docker-volumes`，如果在使用任务中需要使用 docker 镜像进行 `docker` 相关命令操作，会将 `docker.sock` 挂在到
-启动的 docker 容器中。
+启动的 docker 容器中。这个参数是关键。
+
+建议 runner 注册时都增加这个参数，方便以后需要使用 docker 命令的时候可用。
 
 ```yml
 gitlab-runner register -n \
@@ -42,9 +44,11 @@ gitlab-runner register -n \
   --registration-token REGISTRATION_TOKEN \
   --executor docker \
   --description "My Docker Runner" \
-  --docker-image "docker:19.03.8" \
+  --docker-image "alpine:latest" \
   --docker-volumes /var/run/docker.sock:/var/run/docker.sock
 ```
+
+> 注册的时候可用手动增加 `-locked="false"` 指定共享该 runner 。注册之后也是可用更改的 参考：[Locking a specific Runner from being enabled for other projects](https://docs.gitlab.com/ee/ci/runners/#locking-a-specific-runner-from-being-enabled-for-other-projects)
 
 或者手动增加如下配置，然后重启 gitlab-runner
 
