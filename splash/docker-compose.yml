@@ -9,3 +9,8 @@ services:
             memory: 2G
     ports: 
         - 8050:8050
+
+networks: 
+  default:
+    external: 
+      name: other

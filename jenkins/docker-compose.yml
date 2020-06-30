@@ -10,4 +10,8 @@ services:
     volumes:
       - "/data/docker/jenkins:/var/jenkins_home"
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "/home/kevin/workspaces/develop:/home"
+
+networks: 
+  default:
+    external: 
+      name: other

@@ -5,3 +5,13 @@ services:
     container_name: redis6
     ports: 
       - 6380:6379
+    volumes: 
+      - redis_data:/redis
+      
+volumes: 
+  redis_data:
+
+networks: 
+  default:
+    external: 
+      name: db

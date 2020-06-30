@@ -5,12 +5,19 @@ services:
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
+
   kafka:
-    env_file: .env
     image: wurstmeister/kafka
+    env_file: .env
+    container_name: kafka
     ports:
       - "9092:9092"
     environment:
       HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
       KAFKA_CREATE_TOPICS: test:3:1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+networks: 
+  default:
+    external: 
+      name: other

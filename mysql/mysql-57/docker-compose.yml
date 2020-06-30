@@ -7,7 +7,7 @@ services:
     ports:
       - 3306:3306
     networks:
-      - database
+      - db
     volumes:
       - /data/mysql/data:/var/lib/mysql
       - /data/mysql/mysql-files:/var/lib/mysql-files
@@ -16,12 +16,14 @@ services:
   adminer:
     image: adminer
     networks:
-      - database
+      - app
     ports:
       - 8008:8080
 
 networks:
-  database:
-    name: database
-    external: true
-    attachable: true
+  db:
+    external:
+      name: db
+  app:
+    external: 
+      name: app

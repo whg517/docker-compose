@@ -37,3 +37,12 @@ scrape_configs:
       - targets: ['pushgateway:9090']
       # labels:
         # instance: pushgateway
+
+  - job_name: 'spiderkeeper'
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    static_configs:
+    - targets: ['192.168.2.178:8080']

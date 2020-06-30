@@ -1,0 +1,12 @@
+version: "3.7"
+services:
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports: 
+      - 9093:3000
+
+networks: 
+  default:
+    external: 
+      name: app

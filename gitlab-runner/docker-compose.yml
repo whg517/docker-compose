@@ -7,4 +7,13 @@ services:
     ports:
       - 8093:8093
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - /var/run/docker.sock:/var/run/docker.sock
+      - gitlab_runner_config:/etc/gitlab-runner
+
+volumes: 
+  gitlab_runner_config:
+
+networks: 
+  default:
+    external: 
+      name: other
