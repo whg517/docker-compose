@@ -22,8 +22,8 @@ services:
 
 networks:
   db:
-    external:
-      name: db
+    external: true
+    name: db
   app:
-    external: 
-      name: app
+    external: true
+    name: app

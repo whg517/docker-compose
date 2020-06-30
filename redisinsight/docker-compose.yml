@@ -14,5 +14,5 @@ volumes:
 
 networks: 
   default:
-    external:
-      name: app
+    external: true
+    name: app

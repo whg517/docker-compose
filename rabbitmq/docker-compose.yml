@@ -9,5 +9,5 @@ services:
 
 networks: 
   default:
-    external: 
-      name: db
+    external: true
+    name: db

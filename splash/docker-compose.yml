@@ -1,16 +1,13 @@
-version: "3.7"
+version: "2.4"
 services:
 
   splash:
     image: scrapinghub/splash
-    deploy:
-        resources:
-          limits:
-            memory: 2G
+    mem_limit: 2G
     ports: 
         - 8050:8050
 
 networks: 
   default:
-    external: 
-      name: other
+    external: true
+    name: other
