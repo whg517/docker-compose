@@ -1,6 +1,8 @@
 FROM centos:latest                                                                                                                                                                                     
                                                                                                                                                                                                                                                                                                                                                                                                    
-RUN mkdir /tmp/scripts \
+RUN dnf makecache \
+    && dnf install wget \
+    && mkdir /tmp/scripts \
     && curl -L -o /tmp/scripts/v2ray_installer.sh https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh \
     && chmod +x /tmp/scripts/v2ray_installer.sh \
     && /tmp/scripts/v2ray_installer.sh \
@@ -10,6 +12,7 @@ RUN mkdir /tmp/scripts \
     && curl -L -o /tmp/scripts/goproxy_installer.sh https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh \
     && chmod +x /tmp/scripts/goproxy_installer.sh \
     && /tmp/scripts/goproxy_installer.sh \
+    && dnf remove wget \
     && dnf clean all \
     && rm -rf /tmp/scripts
 
