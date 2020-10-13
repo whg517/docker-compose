@@ -1,6 +1,8 @@
 #!/bin/bash
 
-/usr/bin/proxy @/etc/proxy/configfile.txt
-echo "go proxy started."
-
-$@
+if [ -z $1 ] 
+then
+   /usr/bin/proxy sps -S socks -T tcp -P $SOCKS5_ADDR -t tcp -p $SPS_ADDR
+else
+   /usr/bin/proxy $@
+fi

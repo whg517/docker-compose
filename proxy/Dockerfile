@@ -1,27 +1,21 @@
 FROM centos:latest                                                                                                                                                                                     
-                                                                                                                                                                                                                                                                                                                                                                                                   
+
 RUN dnf makecache \
     && dnf install -y wget \
-    && mkdir /tmp/scripts \
-    && curl -L -o /tmp/scripts/v2ray_installer.sh https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh \
-    && chmod +x /tmp/scripts/v2ray_installer.sh \
-    && /tmp/scripts/v2ray_installer.sh \
-    && curl -L -o /tmp/scripts/v2ray_data_installer.sh https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh \
-    && chmod +x /tmp/scripts/v2ray_data_installer.sh \
-    && /tmp/scripts/v2ray_data_installer.sh \
-    && curl -L -o /tmp/scripts/goproxy_installer.sh https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh \
-    && chmod +x /tmp/scripts/goproxy_installer.sh \
-    && /tmp/scripts/goproxy_installer.sh \
+    && curl -L -o /tmp/goproxy_installer.sh https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh \
+    && chmod +x /tmp/goproxy_installer.sh \
+    && /tmp/goproxy_installer.sh \
     && dnf remove -y wget \
-    && dnf clean all \
-    && rm -rf /tmp/scripts
+    && dnf clean all 
 
-COPY goproxy_config.txt /etc/proxy/configfile.txt
-COPY entrypoint.sh /usr/bin/entrypoint 
+COPY ./entrypoint.sh /usr/bin/entrypoint.sh
 
-RUN chmod +x /usr/bin/entrypoint
+RUN chmod +x /usr/bin/entrypoint.sh
 
-VOLUME /usr/local/etc/v2ray /usr/local/share/v2ray /etc/proxy/
+VOLUME /etc/proxy/
 
-ENTRYPOINT ["entrypoint"]
-CMD ["v2ray", "-config=/etc/v2ray/config.json"]
+# SOCKS5_ADDR ==> SPS_ADDR
+ENV SOCKS5_ADDR=v2ray:1080
+ENV SPS_ADDR=:1081
+
+ENTRYPOINT ["entrypoint.sh"]
