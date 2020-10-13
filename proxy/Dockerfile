@@ -18,7 +18,7 @@ COPY entrypoint.sh /usr/bin/entrypoint
 
 RUN chmod +x /usr/bin/entrypoint
 
-VOLUME /usr/local/etc/v2ray /usr/local/share/v2ray
+VOLUME /usr/local/etc/v2ray /usr/local/share/v2ray /etc/proxy/
 
 ENTRYPOINT ["entrypoint"]
 CMD ["v2ray", "-config=/etc/v2ray/config.json"]
