@@ -1,9 +1,10 @@
 FROM centos:latest                                                                                                                                                                                     
                                                                                                                                                                                                                                                                                                                                                                                                    
-RUN curl -L -o /tmp/scripts/v2ray_install_script.sh https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh \
+RUN mkdir /tmp/scripts \
+    && curl -L -o /tmp/scripts/v2ray_installer.sh https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh \
     && chmod +x /tmp/scripts/v2ray_installer.sh \
-    && /tmp/v2ray_install_script.sh \
-    && curl -L -o /tmp/scripts/v2ray_data_install.sh https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh \
+    && /tmp/scripts/v2ray_installer.sh \
+    && curl -L -o /tmp/scripts/v2ray_data_installer.sh https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh \
     && chmod +x /tmp/scripts/v2ray_data_installer.sh \
     && /tmp/scripts/v2ray_data_installer.sh \
     && curl -L -o /tmp/scripts/goproxy_installer.sh https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh \
