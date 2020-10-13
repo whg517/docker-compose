@@ -1,8 +1,0 @@
-sps 
--S socks 
--T tcp 
--P v2ray:1080
--t tcp
--p :1081
---log /var/log/goproxy.log
---daemon
