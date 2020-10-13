@@ -1,0 +1,8 @@
+sps 
+-S socks 
+-T tcp 
+-P 127.0.0.1:1080
+-t tcp
+-p :1081
+--log /var/log/goproxy.log
+--daemon

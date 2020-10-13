@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      # - ./mongod.conf:/etc/mongod.conf
+      - /data/mongodb/data:/data/db
+    # command:
+    #   - '-f'
+    #   - '/etc/mongod.conf'
+
+networks:
+  default:
+    external:
+      name: db

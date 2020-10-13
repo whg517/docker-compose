@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  v2ray:
+    build:
+      context: .
+    image: proxy:latest
+    container_name: proxy
+    ports:
+      - 1082:1080
+    volumes:
+      - ${PWD}/config.json:/etc/v2ray/config.json
+    command:
+      - v2ray
+      - -config=/etc/v2ray/config.json
+
+networks:
+  default:
+    external: true
+    name: other

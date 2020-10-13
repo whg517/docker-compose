@@ -1,7 +1,7 @@
 version: "3.7"
 
 services:
-  gitlab-runner:
+  gitlab_runner:
     container_name: gitlab-runner
     image: gitlab/gitlab-runner:latest
     ports:
