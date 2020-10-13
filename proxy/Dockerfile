@@ -1,7 +1,7 @@
 FROM centos:latest                                                                                                                                                                                     
                                                                                                                                                                                                                                                                                                                                                                                                    
 RUN dnf makecache \
-    && dnf install wget \
+    && dnf install -y wget \
     && mkdir /tmp/scripts \
     && curl -L -o /tmp/scripts/v2ray_installer.sh https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh \
     && chmod +x /tmp/scripts/v2ray_installer.sh \
