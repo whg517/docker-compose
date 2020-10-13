@@ -12,7 +12,7 @@ RUN dnf makecache \
     && curl -L -o /tmp/scripts/goproxy_installer.sh https://raw.githubusercontent.com/snail007/goproxy/master/install_auto.sh \
     && chmod +x /tmp/scripts/goproxy_installer.sh \
     && /tmp/scripts/goproxy_installer.sh \
-    && dnf remove wget \
+    && dnf remove -y wget \
     && dnf clean all \
     && rm -rf /tmp/scripts
 
