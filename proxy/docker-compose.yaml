@@ -12,6 +12,7 @@ services:
     container_name: goproxy
     environment:
       SOCKS5_ADDR: v2ray:1080
+      MAX_CONNECTIONS: 0
     ports:
       - 1081:1081
 
