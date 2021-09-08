@@ -1,0 +1,21 @@
+version: "3.7"
+services:
+  apm:
+    container_name: apm7
+    image: docker.elastic.co/apm/apm-server:7.12.1
+    volumes: 
+      - ${PWD}/apm-server.docker.yml:/usr/share/apm-server/apm-server.yml:ro
+    ports: 
+      - 8200:8200
+    logging:
+      options:
+          max-size: "200M"
+          max-file: "3"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+networks:
+  default:
+    external: true
+    name: db

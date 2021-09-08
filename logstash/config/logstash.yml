@@ -1,2 +1,9 @@
-http.host: "0.0.0.0"
-xpack.monitoring.elasticsearch.hosts: [ "http://192.168.9.10:9201" ]
+http:
+  host: "0.0.0.0" # Default: 127.0.0.1
+  port: 9600  # Default
+
+xpack:
+  monitoring:
+    elasticsearch:
+      hosts:
+        - http://es7:9200

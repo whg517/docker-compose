@@ -2,3 +2,5 @@
 .idea
 **/.env
 proxy/config.json
+
+**/local*

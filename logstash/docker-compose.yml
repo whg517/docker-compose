@@ -2,13 +2,27 @@ version: "3.7"
 
 services:
   logstash:
-    image: logstash:7.6.2
-    container_name: logstash
+    image: logstash:7.11.2
+    container_name: logstash7
     volumes: 
-      - ./pipeline:/usr/share/logstash/pipeline
-      - ./config/logstash.yml:/usr/share/logstash/config/logstash.yml
-
+      - ${PWD}/pipeline:/usr/share/logstash/pipeline
+      - ${PWD}/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    networks:
+      - other
+      - db
+    ports:
+      - 9600:9600
+      - 9601:9601/tcp
+      - 9601:9601/udp
+      - 9602:9602
+    logging:
+      options:
+          max-size: "200M"
+          max-file: "3"
 networks: 
-  default:
+  other:
     external: true
     name: other
+  db:
+    external: true
+    name: db

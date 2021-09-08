@@ -6,10 +6,7 @@ services:
     ports: 
       - 6380:6379
     volumes: 
-      - redis_data:/redis
-      
-volumes: 
-  redis_data:
+      - /data/docker/redis/6:/redis
 
 networks: 
   default:

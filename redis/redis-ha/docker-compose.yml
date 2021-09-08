@@ -16,7 +16,7 @@ services:
     logging:
       options:
           max-size: "200M"
-          max-file: "5"  
+          max-file: "5"
     environment:
       TZ: "Asia/Shanghai"
     volumes:
@@ -36,7 +36,7 @@ services:
     logging:
       options:
           max-size: "200M"
-          max-file: "5"  
+          max-file: "5"
     depends_on:
       - redis-server-master
     environment:
@@ -58,7 +58,7 @@ services:
     logging:
       options:
           max-size: "200M"
-          max-file: "5"  
+          max-file: "5"
     depends_on:
       - redis-server-master
     environment:
@@ -81,7 +81,7 @@ services:
     logging:
       options:
           max-size: "200M"
-          max-file: "5"  
+          max-file: "5"
     depends_on:
       - redis-server-slaver-1
       - redis-server-slaver-2
@@ -104,7 +104,7 @@ services:
     logging:
       options:
           max-size: "200M"
-          max-file: "5"  
+          max-file: "5"
     volumes:
       - ${PWD}/example-config/sentinel-2.conf:/usr/local/etc/redis/redis-sentinel.conf
     environment:
@@ -124,7 +124,7 @@ services:
     logging:
       options:
           max-size: "200M"
-          max-file: "5"  
+          max-file: "5"
     volumes:
       - ${PWD}/example-config/sentinel-3.conf:/usr/local/etc/redis/redis-sentinel.conf
     environment:
