@@ -1,8 +1,8 @@
 version: "3.7"
 services:
-  es73:
+  es7:
     # https://www.elastic.co/guide/en/elasticsearch/reference/7.12/docker.html
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.12.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.2
     container_name: es7
     environment:
       discovery.type: single-node  # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/bootstrap-checks.html#single-node-discovery
@@ -11,33 +11,44 @@ services:
       transport.host: 127.0.0.1  # https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html#dev-vs-prod-mode
     logging:
       options:
-          max-size: "200M"
-          max-file: "3"
+          max-size: "100M"
+          max-file: "1"
     ulimits:
       memlock:
         soft: -1
         hard: -1
-    # volumes:
-    #   - esdata:/usr/share/elasticsearch/data
+    volumes:
+      - es7data:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
+    networks:
+      - app
+      - db
 
   # https://www.elastic.co/guide/en/kibana/current/docker.html
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.12.1
+  kibana7:
+    image: docker.elastic.co/kibana/kibana:7.14.2
     container_name: kibana7
     environment:
       ELASTICSEARCH_HOSTS: http://es7:9200
-    volumes:
-      - ${PWD}/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
     logging:
       options:
-          max-size: "200M"
-          max-file: "3"
+          max-size: "100M"
+          max-file: "1"
     ports:
       - 5601:5601
+    networks:
+      - app
+      - db
+
+volumes: 
+  es7data:
 
 networks:
-  default:
+  db:
     external: true
     name: db
+  app:
+    external: true
+    name: app
+

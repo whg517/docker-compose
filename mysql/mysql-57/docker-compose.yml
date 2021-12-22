@@ -3,15 +3,18 @@ services:
   mysql57:
     image: mysql:5.7
     container_name: mysql-5.7
-    env_file: ${PWD}/.env
+    env_file: ./.env
+    security_opt:
+      - seccomp=unconfined
     ports:
       - 3306:3306
     networks:
       - db
     volumes:
-      - /data/mysql/data:/var/lib/mysql
-      - /data/mysql/mysql-files:/var/lib/mysql-files
-      - ${PWD}/conf:/etc/mysql/conf.d
+      - /data/mysql/data:/var/lib/mysql:rw
+      - /data/mysql/mysql-files:/var/lib/mysql-files:rw
+      - ./conf:/etc/mysql/conf.d
+    restart: always
 
   adminer:
     image: adminer
@@ -19,6 +22,7 @@ services:
       - app
     ports:
       - 8008:8080
+    restart: always
 
 networks:
   db:

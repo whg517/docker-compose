@@ -4,9 +4,10 @@ services:
     image: redis:6
     container_name: redis6
     ports: 
-      - 6380:6379
+      - 6379:6379
     volumes: 
       - /data/docker/redis/6:/redis
+    restart: always
 
 networks: 
   default:

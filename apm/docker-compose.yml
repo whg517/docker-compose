@@ -2,20 +2,35 @@ version: "3.7"
 services:
   apm:
     container_name: apm7
-    image: docker.elastic.co/apm/apm-server:7.12.1
-    volumes: 
-      - ${PWD}/apm-server.docker.yml:/usr/share/apm-server/apm-server.yml:ro
+    image: docker.elastic.co/apm/apm-server:7.14.2
+    # volumes: 
+    #   - ./apm-server.docker.yml:/usr/share/apm-server/apm-server.yml:ro
+    environment:
+      output.elasticsearch.hosts: es7:9200
+    # Default command: -e -d
+    # -d show log to stderr
+    # use -E pass overwrite configuration.
+    command: -e -E output.elasticsearch.hosts=["es7:9200"] -E apm-server.kibana.enabled=true -E apm-server.kibana.host=http://kibana7:5601 -E apm-server.rum.enable=true
     ports: 
       - 8200:8200
     logging:
       options:
-          max-size: "200M"
-          max-file: "3"
+          max-size: "100M"
+          max-file: "1"
+    restart: always
     ulimits:
       memlock:
         soft: -1
         hard: -1
+    networks:
+      - app
+      - db
+
+# es7 and kibana7 in db network.
 networks:
-  default:
+  db:
     external: true
     name: db
+  app:
+    external: true
+    name: app

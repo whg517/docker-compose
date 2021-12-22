@@ -6,7 +6,7 @@
 
 启动前在 `docker-compose.yml` 同级新建 `.env` 文件，增加如下内容。
 
-```
+```env
 MYSQL_ROOT_PASSWORD=yourpassword
 ```
 

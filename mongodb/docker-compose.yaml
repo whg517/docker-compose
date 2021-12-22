@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   mongodb:
-    image: mongo
+    image: mongo:latest
     container_name: mongodb
     restart: always
     # environment:
@@ -10,11 +10,16 @@ services:
     ports:
       - 27017:27017
     volumes:
-      # - ./mongod.conf:/etc/mongod.conf
+      - ./scripts:/docker-entrypoint-initdb.d/
       - /data/mongodb/data:/data/db
     # command:
     #   - '-f'
     #   - '/etc/mongod.conf'
+
+    # volumes:
+      # - ./mongod.conf:/etc/mongod.conf
+      # - /data/mongodb/data:/data/db
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
 
 networks:
   default:

@@ -7,12 +7,55 @@
 [APM-server 手动安装](https://www.elastic.co/guide/en/apm/server/7.12/installing.html)
 [APM-server Docker 部署](https://www.elastic.co/guide/en/apm/server/7.12/running-on-docker.html)
 [APM-server Docker 镜像](https://hub.docker.com/_/apm-server)
+[APM-server Dockerfile](https://github.com/elastic/apm-server/blob/master/Dockerfile)
 [APM-server 配置文档](https://www.elastic.co/guide/en/apm/server/7.12/configuration-process.html)
 
 ## 配置
 
-在部署时，由于 APM-server 的 Docker 部署不支持传入环境变量，传入 ES 的地址需要通过命令行参数，在 docker-compose 中使用有点麻烦。
-所以采用加载 APM-server 配置文件的方式配置 APM-server 。
+[Configure APM Server on Docker](https://www.elastic.co/guide/en/apm/server/7.12/running-on-docker.html#_configure_apm_server_on_docker)
+
+在配置 APM 时，支持多种方式。
+
+### 通过命令传递配置
+
+APM 启动命令支持使用 `-E` 传递配置：
+
+```yml
+version: "3.7"
+services:
+  apm:
+    container_name: apm7
+    image: docker.elastic.co/apm/apm-server:7.14.2
+    # volumes: 
+    #   - ./apm-server.docker.yml:/usr/share/apm-server/apm-server.yml:ro
+    environment:
+      output.elasticsearch.hosts: es7:9200
+    # Default command: -e -d
+    # -d show log to stderr
+    # use -E pass overwrite configuration.
+    command: -e -E output.elasticsearch.hosts=["es7:9200"] -E apm-server.kibana.enabled=true -E apm-server.kibana.host=http://kibana7:5601 -E apm-server.rum.enable=true
+    ports: 
+      - 8200:8200
+    logging:
+      options:
+          max-size: "100M"
+          max-file: "1"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+# es7 and kibana7 in db network.
+networks:
+  default:
+    external: true
+    name: db
+
+```
+
+### 使用配置文件覆盖默认配置
+
+通过将 APM 的配置挂在到镜像中将配置传递到 `/usr/share/apm-server/apm-server.yml` 中，以覆盖默认配置。
 
 ```yaml
 apm-server:
@@ -30,6 +73,7 @@ output:
 queue.mem.events: 4096
 
 max_procs: 4
+
 ```
 
 ## 使用

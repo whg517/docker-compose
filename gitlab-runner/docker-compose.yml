@@ -9,6 +9,14 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - gitlab_runner_config:/etc/gitlab-runner
+    logging:
+      options:
+          max-size: "100M"
+          max-file: "1"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
 
 volumes: 
   gitlab_runner_config:
