@@ -1,0 +1,99 @@
+This project is a place for individuals to record commonly used docker-compose files, which is convenient for unified management and synchronous use.
+
+## Prepare
+Manage the commonly used docker-compose in Github, which can be easily found in the use. If you are in a common development environment, you only need to clone the project to the working directory,
+In subsequent use, if there are adjustments or additional services, they can be easily synchronized. If it is not a common environment, you only need to open this project in the browser, and the required configuration file
+Just copy it down.
+
+## Environment preparation
+
+First, you need a container environment, which can be [Docker](https://docs.docker.com/get-started/) or [containerd](https://containerd.io/).
+In view of the policy adjustments of Docker in recent years and the development of the containerization community, if you want to use containers in a new environment, it is recommended that you use [containerd](https://containerd.io/).
+The installation environment is not the focus of this project, so only the required technologies and related reference links are listed.
+
+###containerd
+
+It is recommended to use [containerd](https://containerd.io/) as the back-end container tool, even if you install kubernetes in the future, you can easily handle it.
+
+Refer to [Getting started](https://containerd.io/docs/getting-started/) to install containerd.
+
+Refer to [containerd/nerdctl](https://github.com/containerd/nerdctl) to install Docker commands adapted to containerd. Lets you use Docker and docker-compose like
+Use containerd.
+###Docker
+Please refer to [Get Docker](https://docs.docker.com/get-docker/) to install the latest Docker environment.
+
+Then refer to [Install Docker Compose](https://docs.docker.com/compose/install/) to install the latest version of docker-compose.
+
+## Serve
+## Initialize the network
+
+It is recommended to plan the subnet for the container environment first and initialize the external subnet in advance. When starting the service, associate the container to the subnet.
+
+When the container communicates between services, it does not depend on the address of the host machine, and can communicate through the internal host name (container name). This also avoids
+Some ports that do not need to be exposed. For example, for a web service, there are three containers, namely `app`,
+`restapi` and `pgsql`. The `app` container exposes the `8080` port, which can be mapped to the host, and then
+Access the front-end page through `9090` of the host machine. For `app` to access the backend `restapi` container, just pass the internal hostname and
+port will do. And the back-end container `restapi` accesses `pgsql` in the same way. Cannot be accessed from the outside
+The backend container of the service doesn't even know the contents of the backend database. It not only reduces the port occupation, but also ensures the backend and database services
+safety.
+
+My approach is to create three networks in addition to the default ones:
+
+- app subnet: the subnet where the application-related containers are located.
+- db subnet: the subnet where the data-related container is stored
+- other subnet: If it does not meet the above two conditions, put it in this subnet.
+
+All docker-compose should not depend on the specific host IP, such as `192.168.22.102`.
+
+## use
+
+clone project
+
+```bash
+https://github.com/whg517/docker-compose.git
+```
+
+Then switch to the directory of the service you want to start and execute `nerdctl compose up -d` or `docker-compose up -d`.
+
+If you have custom requirements, just change the file.
+
+## Existing service
+
+-Elastic APM
+-ElasticSearch + Kibana
+- gitlab-runner
+-grafana
+-jenkins
+-kafka
+- logstach
+- mongodb
+-mysql
+- nifi
+-portainer
+-prometheus
+-proxy
+- rabbitmq
+-redis
+   - redis single node
+   - redis HA
+-redisinsight
+- skywakling
+- sonarqube
+-splash
+## Notice
+If you plan to directly fork the repository and use it directly. When using your own configuration or local configuration, it is recommended to name the file name with `local` prefix, so that Git will ignore the file.
+
+Don't commit anything about security (such as username, password, etc.) to Git as suggested. If you really need to pass in, you can read the `.env` file in the directory in the docker-compose file.
+This file is not recorded by Git.
+
+Any examples in this repository should not use specific IPs like `192.168.88.12` or `10.10.50.23` etc. The real IP address in the intranet environment is not easy to migrate and changes frequently
+Will add duplicate and unnecessary commit records. It is recommended to plan the Docker subnet, add the container to the subnet where the container to be connected is located, and then access each other through the host name.
+
+My practice is to create three subnets:
+
+- app subnet: the subnet where the application-related containers are located.
+- db subnet: the subnet where the data-related container is stored
+- other subnet: If it does not meet the above two conditions, put it in this subnet.
+
+Add the subnet to which service the container needs to connect to. For example, there is a container in the other subnet, but it needs to communicate with MySQL, and it also needs to connect to a web container in the app subnet.
+This container will join the three subnets, and then communicate with the two containers through the hostname.
