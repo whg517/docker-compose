@@ -16,19 +16,17 @@ x-base: &default-config
   mem_swappiness: 0
 
 services:
-  nifi:
-    image: apache/nifi:latest
-    container_name: nifi
+  db:
+    image: postgres
     << : *default-config
-    ports:
-      - 9090:9090
-    environment:
-      - NIFI_WEB_HTTP_PORT=9090
+    env_file: ./.env
     volumes:
-      - /tmp/nifi:/tmp/nifi
+      - /data/docker/pg-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - db
 
 networks:
-  default:
+  db:
     external: true
-    name: app
-

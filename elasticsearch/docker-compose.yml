@@ -1,4 +1,20 @@
-version: "3.7"
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+
 services:
   es7:
     # https://www.elastic.co/guide/en/elasticsearch/reference/7.12/docker.html
@@ -9,16 +25,9 @@ services:
       bootstrap.memory_lock: "true"
       ES_JAVA_OPTS: -Xms512m -Xmx512m
       transport.host: 127.0.0.1  # https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html#dev-vs-prod-mode
-    logging:
-      options:
-          max-size: "100M"
-          max-file: "1"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+      xpack.security.enabled: false
     volumes:
-      - es7data:/usr/share/elasticsearch/data
+      - /data/docker/es7:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
     networks:
@@ -31,18 +40,13 @@ services:
     container_name: kibana7
     environment:
       ELASTICSEARCH_HOSTS: http://es7:9200
-    logging:
-      options:
-          max-size: "100M"
-          max-file: "1"
+      i18n.locale: zh-CN
+      xpack.security.enabled: false
     ports:
       - 5601:5601
     networks:
       - app
       - db
-
-volumes: 
-  es7data:
 
 networks:
   db:

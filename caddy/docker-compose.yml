@@ -16,19 +16,18 @@ x-base: &default-config
   mem_swappiness: 0
 
 services:
-  nifi:
-    image: apache/nifi:latest
-    container_name: nifi
+  server:
+    image: caddy:2
     << : *default-config
     ports:
-      - 9090:9090
-    environment:
-      - NIFI_WEB_HTTP_PORT=9090
+      - 9090:80
     volumes:
-      - /tmp/nifi:/tmp/nifi
+      - ${PWD}/Caddyfile:/etc/caddy/Caddyfile
+      #- /opt/data/docker:/data
+      - /data/docker/caddy:/data
+      - ${PWD}/config:/config
 
 networks:
   default:
     external: true
     name: app
-

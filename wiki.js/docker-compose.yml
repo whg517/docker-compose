@@ -1,0 +1,57 @@
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  env_file:
+    - .env
+
+services:
+  db:
+    image: postgres:11-alpine
+    <<: *default-config
+    environment:
+      POSTGRES_DB: wiki
+      # POSTGRES_PASSWORD: wikijsrocks
+      # POSTGRES_USER: wikijs
+    networks:
+      - db
+    logging:
+      driver: "none"
+    volumes:
+      - /data/docker/wiki.js:/var/lib/postgresql/data
+
+  wiki:
+    image: ghcr.io/requarks/wiki:2
+    <<: *default-config
+    depends_on:
+      - db
+    networks:
+      - db
+      - app
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      # DB_USER: wikijs
+      # DB_PASS: wikijsrocks
+      # DB_NAME: wiki
+    ports:
+      - "3000:3000"
+
+networks:
+  db:
+    external: true
+  app:
+    external: true

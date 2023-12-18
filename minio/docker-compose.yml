@@ -16,19 +16,20 @@ x-base: &default-config
   mem_swappiness: 0
 
 services:
-  nifi:
-    image: apache/nifi:latest
-    container_name: nifi
+  minio:
+    image: 'minio/minio'
+    container_name: minio
     << : *default-config
-    ports:
-      - 9090:9090
-    environment:
-      - NIFI_WEB_HTTP_PORT=9090
     volumes:
-      - /tmp/nifi:/tmp/nifi
+      - '/data/docker/minio:/data'
+    command: server /data --console-address ":9001"
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+
+
 
 networks:
   default:
     external: true
     name: app
-

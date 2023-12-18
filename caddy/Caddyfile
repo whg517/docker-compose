@@ -1,0 +1,5 @@
+:80 {
+        # Set this path to your site's directory.
+        root * /data
+        file_server browse
+}

@@ -1,4 +1,19 @@
-version: '3.7'
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
 
 services:
   zookeeper:
@@ -10,6 +25,7 @@ services:
     image: wurstmeister/kafka
     env_file: .env
     container_name: kafka
+    <<: *default-config
     ports:
       - "9092:9092"
     environment:
@@ -17,7 +33,7 @@ services:
       KAFKA_CREATE_TOPICS: test:3:1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 
-networks: 
+networks:
   default:
     external: true
     name: other

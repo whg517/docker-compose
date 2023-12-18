@@ -14,7 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version: '3.8'
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+
 services:
   oap:
     image: apache/skywalking-oap-server:8.8.1
@@ -25,6 +41,7 @@ services:
     ports:
       - "11800:11800"
       - "12800:12800"
+    <<: *default-config
     healthcheck:
       test: [ "CMD-SHELL", "/skywalking/bin/swctl ch" ]
       interval: 30s
@@ -41,6 +58,7 @@ services:
   ui:
     image: apache/skywalking-ui:8.8.1
     container_name: skywalking-ui
+    <<: *default-config
     depends_on:
       - oap
     networks:

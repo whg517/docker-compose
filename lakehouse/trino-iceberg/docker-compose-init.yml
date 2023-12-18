@@ -1,0 +1,64 @@
+version: '3.9'
+
+services:
+  # use gradle as init container to download hive jars
+  # https://stackoverflow.com/a/32402694/11722440
+  metastore-init-jars-download:
+    image: gradle:8
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: hive-jars
+        target: /jars
+      - type: bind  # 使用 bind 挂载单个文件到容器中
+        source: ${PWD}/config/hive/build.gradle
+        target: /home/gradle/build.gradle
+    command: |
+      bash -c '
+      gradle download
+      '
+
+  # merge hive jars
+  # https://stackoverflow.com/a/32402694/11722440
+  metastore-init-jars-merge:
+    image: apache/hive:4.0.0-beta-1
+    restart: on-failure
+    user: root
+    volumes:
+      - hive-jars:/jars:rw
+    entrypoint: |
+      bash -c '
+      cp -R /opt/hive/lib/* /jars
+      '
+
+  # minio s3 init
+  minio-s3-init:
+    image: quay.io/minio/minio:RELEASE.2023-08-16T20-17-30Z
+    restart: on-failure
+    env_file:
+      - .env
+    volumes:
+      - type: bind
+        source: ${PWD}/scripts/minio-init.sh
+        target: /minio-init.sh
+    entrypoint: |
+      bash -c '
+      /minio-init.sh
+      '
+
+  trino-init-catalog:
+    image: debian:latest
+    restart: on-failure
+    user: root
+    env_file:
+      - .env
+    volumes:
+      - ${PWD}/config/trino/catalog:/catalog:rw
+    command: |
+      bash -c '
+      sed -i "s/\(^hive.s3.aws-access-key=\).*$/\1${LAKEHOUSE_USER}/" /catalog/iceberg.properties
+      sed -i "s/\(^hive.s3.aws-secret-key=\).*$/\1${LAKEHOUSE_PASSWORD}/" /catalog/iceberg.properties
+      '
+
+volumes:
+  hive-jars:

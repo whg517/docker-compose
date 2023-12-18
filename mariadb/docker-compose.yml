@@ -1,0 +1,48 @@
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+
+services:
+  db:
+    image: mariadb:10
+    << : *default-config
+    env_file: ./.env
+    security_opt:
+      - seccomp=unconfined
+    ports:
+      - 3306:3306
+    networks:
+      - db
+    volumes:
+      - /data/docker/mysql/data:/var/lib/mysql:rw
+      - /data/doker/mysql/mysql-files:/var/lib/mysql-files:rw
+      - ${PWD}/conf:/etc/mysql/conf.d
+
+  adminer:
+    image: adminer
+    << : *default-config
+    networks:
+      - app
+    ports:
+      - 8008:8080
+
+networks:
+  db:
+    external: true
+    name: db
+  app:
+    external: true
+    name: app

@@ -1,12 +1,29 @@
-version: "3.7"
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+
 services:
   grafana:
     image: grafana/grafana
     container_name: grafana
-    ports: 
+    << : *default-config
+    ports:
       - 9093:3000
 
-networks: 
+networks:
   default:
     external: true
     name: app

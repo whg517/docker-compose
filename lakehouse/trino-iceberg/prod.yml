@@ -1,0 +1,163 @@
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+
+services:
+
+  # pg server
+  postgres:
+    image: postgres:15.4
+    !!merge <<: *default-config
+    container_name: postgres
+    hostname: postgres
+    networks:
+    - db
+    env_file:
+    - .env
+    # ports:
+    #   - '127.0.0.1:5432:5432'
+    # environment:
+    #   POSTGRES_PASSWORD: postgres
+    #   POSTGRES_USER: postgres
+    #   POSTGRES_DB: postgres
+    volumes:
+    - /var/data/postgres/data:/var/lib/postgresql/data
+
+networks:
+  db:
+    external: true
+
+---
+version: '3.9'
+
+services:
+  # use gradle as init container to download hive jars
+  # https://stackoverflow.com/a/32402694/11722440
+  metastore-init-jars-download:
+    image: gradle:8
+    restart: on-failure
+    networks:
+    - lakehouse
+    volumes:
+    - /data/docker/hive-metastore/lib:/jars:rw
+    - type: bind # 使用 bind 挂载单个文件到容器中
+      source: ${PWD}/config/build.gradle
+      target: /home/gradle/build.gradle
+    command: |
+      bash -c '
+      gradle download
+      '
+
+  # merge hive jars
+  # https://stackoverflow.com/a/32402694/11722440
+  metastore-init-jars-merge:
+    image: apache/hive:4.0.0-beta-1
+    restart: on-failure
+    user: root
+    networks:
+    - lakehouse
+    volumes:
+    - /data/docker/hive-metastore/lib:/jars:rw
+    entrypoint: |
+      bash -c '
+      cp -R /opt/hive/lib/* /jars
+      '
+
+networks:
+  lakehouse:
+    external: true
+---
+
+version: "3.9"
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  env_file:
+  - .env
+
+services:
+  metastore:
+    image: apache/hive:4.0.0-beta-1
+    !!merge <<: *default-config
+    container_name: metastore
+    hostname: metastore
+    networks:
+    - db
+    - lakehouse
+    environment:
+      DB_DRIVER: postgres
+      SERVICE_NAME: 'metastore -hiveconf hive.root.logger=INFO,console'
+      SERVICE_OPTS: '-Xmx1G -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/${POSTGRES_DB} -Djavax.jdo.option.ConnectionUserName=${POSTGRES_USER} -Djavax.jdo.option.ConnectionPassword=${POSTGRES_PASSWORD} -Dhive.metastore.warehouse.dir=/lakehouse/data '
+    # ports:
+    #   - '127.0.0.1:9083:9083'
+    volumes:
+    - /data/docker/hive-metastore/lib:/opt/hive/lib
+
+networks:
+  db:
+    external: true
+  lakehouse:
+    external: true
+
+---
+version: '3.9'
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  env_file:
+  - .env
+
+services:
+  # trino server
+  trino:
+    image: trinodb/trino:424
+    user: root
+    hostname: trino
+    !!merge <<: *default-config
+    ports:
+    - 8080:8080
+    networks:
+    - lakehouse
+    volumes:
+    - ${PWD}/config/trino/catalog:/etc/trino/catalog
+    - /data/docker/trino/data:/opt/hive/data/warehouse
+networks:
+  lakehouse:
+    external: true
+

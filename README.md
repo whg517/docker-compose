@@ -1,5 +1,9 @@
 # docker-compose
 
+> 最近发现有不少人关注到了我的这个仓库。非常荣幸我的过往经验形成的知识能给大家提供帮助。
+> 为了方便大家对仓库变更有具体的了解，我增加了一个 [ChangeLog](./ChangeLog.md) 文件，记录了每次变更的内容。
+> 如果你有任何问题，欢迎提 ISSUE 。
+
 本项目为个人记录常用 docker-compose 文件的地方，方便统一管理和同步使用。
 
 将常用的 docker-compose 放在 Github 中管理，可以在使用的很方便的找到。如果是在常用的开发环境，只需要将项目克隆到工作目录，
@@ -62,19 +66,27 @@ https://github.com/whg517/docker-compose.git
 
 ## 已有服务
 
+- [alist](https://alist.nn.ci/)：一个可以连接多种后端存储用来做网盘的开源项目
 - Elastic APM
+- [aria2](https://aria2.github.io/)：一个突破单线程下载的下载工具，通过油猴脚本可以突破百度云限速
+- [caddy](https://caddyserver.com/docs/)：一个使用 go 开发的代理服务器，本地运行可以将某个目录作为文件服务器在内网共享
 - ElasticSearch + Kibana
 - gitlab-runner
 - grafana
 - jenkins
 - kafka
+- lakehouse
+  - trino-iceberg：基于docker实现的 pg+minio+trino+iceberg 的湖仓方案，详细文档已完成
 - logstach
+- mariadb
+- minio
 - mongodb
 - mysql
 - nifi
+- postgres
 - portainer
 - prometheus
-- proxy
+- proxy：一个使用 v2fly 客户端服务，为本地提供代理
 - rabbitmq
 - redis
   - redis 单节点
@@ -83,6 +95,7 @@ https://github.com/whg517/docker-compose.git
 - skywakling
 - sonarqube
 - splash
+- [wiki.js](https://js.wiki/)：一个轻量的文档管理系统，可以用来做个人 wiki
 
 ## 注意
 

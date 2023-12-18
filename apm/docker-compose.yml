@@ -1,9 +1,27 @@
-version: "3.7"
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+
 services:
   apm:
-    container_name: apm7
     image: docker.elastic.co/apm/apm-server:7.14.2
-    # volumes: 
+    container_name: apm7
+    hostname: apm7
+    << : *default-config
+    # volumes:
     #   - ./apm-server.docker.yml:/usr/share/apm-server/apm-server.yml:ro
     environment:
       output.elasticsearch.hosts: es7:9200
@@ -11,17 +29,8 @@ services:
     # -d show log to stderr
     # use -E pass overwrite configuration.
     command: -e -E output.elasticsearch.hosts=["es7:9200"] -E apm-server.kibana.enabled=true -E apm-server.kibana.host=http://kibana7:5601 -E apm-server.rum.enable=true
-    ports: 
+    ports:
       - 8200:8200
-    logging:
-      options:
-          max-size: "100M"
-          max-file: "1"
-    restart: always
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
     networks:
       - app
       - db

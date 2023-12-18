@@ -1,27 +1,35 @@
-version: "3.7"
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
 
 services:
   gitlab_runner:
     container_name: gitlab-runner
     image: gitlab/gitlab-runner:latest
+    << : *default-config
     ports:
       - 8093:8093
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - gitlab_runner_config:/etc/gitlab-runner
-    logging:
-      options:
-          max-size: "100M"
-          max-file: "1"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
 
-volumes: 
+volumes:
   gitlab_runner_config:
 
-networks: 
+networks:
   default:
     external: true
     name: other

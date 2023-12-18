@@ -1,114 +1,88 @@
----
+version: "3.9"
 
-version: '3.7'
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  environment:
+    TZ: "Asia/Shanghai"
 
 services:
   redis-server-master:
     image: redis
     container_name: redis-server-master
-    restart: always
+    << : *default-config
     deploy:
       resources:
         limits:
           memory: 1024MB
-    networks:
-      - db
-    logging:
-      options:
-          max-size: "200M"
-          max-file: "5"
-    environment:
-      TZ: "Asia/Shanghai"
     volumes:
-      - ${PWD}/example-config/master.conf:/usr/local/etc/redis/redis.conf
+      - ${PWD}/example-config:/usr/local/etc/redis
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
   redis-server-slaver-1:
     image: redis
     container_name: redis-server-slaver-1
-    restart: always
+    << : *default-config
     deploy:
       resources:
         limits:
           memory: 1024MB
-    networks:
-      - db
-    logging:
-      options:
-          max-size: "200M"
-          max-file: "5"
     depends_on:
       - redis-server-master
-    environment:
-      TZ: "Asia/Shanghai"
     volumes:
-      - ${PWD}/example-config/slave1.conf:/usr/local/etc/redis/redis.conf
+      - ${PWD}/example-config:/usr/local/etc/redis
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
   redis-server-slaver-2:
     image: redis
     container_name: redis-server-slaver-2
-    restart: always
+    << : *default-config
     deploy:
       resources:
         limits:
           memory: 1024MB
-    networks:
-      - db
-    logging:
-      options:
-          max-size: "200M"
-          max-file: "5"
     depends_on:
       - redis-server-master
-    environment:
-      TZ: "Asia/Shanghai"
     volumes:
-      - ${PWD}/example-config/slave2.conf:/usr/local/etc/redis/redis.conf
+      - ${PWD}/example-config:/usr/local/etc/redis
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
-
 
   redis-sentinel-1:
     image: redis
     container_name: redis-sentinel-1
-    restart: always
+    << : *default-config
     deploy:
       resources:
         limits:
           memory: 1024MB
-    networks:
-      - db
-    logging:
-      options:
-          max-size: "200M"
-          max-file: "5"
     depends_on:
       - redis-server-slaver-1
       - redis-server-slaver-2
     volumes:
-      - ${PWD}/example-config/sentinel-1.conf:/usr/local/etc/redis/redis-sentinel.conf
-    environment:
-      TZ: "Asia/Shanghai"
+      - ${PWD}/example-config:/usr/local/etc/redis
     command: ["redis-sentinel", "/usr/local/etc/redis/redis-sentinel.conf"]
-    
+
   redis-sentinel-2:
     image: redis
     container_name: redis-sentinel-2
-    restart: always
+    << : *default-config
     deploy:
       resources:
         limits:
           memory: 1024MB
-    networks:
-      - db
-    logging:
-      options:
-          max-size: "200M"
-          max-file: "5"
     volumes:
-      - ${PWD}/example-config/sentinel-2.conf:/usr/local/etc/redis/redis-sentinel.conf
-    environment:
-      TZ: "Asia/Shanghai"
+      - ${PWD}/example-config:/usr/local/etc/redis
     command: ["redis-sentinel", "/usr/local/etc/redis/redis-sentinel.conf"]
 
   redis-sentinel-3:
@@ -126,12 +100,10 @@ services:
           max-size: "200M"
           max-file: "5"
     volumes:
-      - ${PWD}/example-config/sentinel-3.conf:/usr/local/etc/redis/redis-sentinel.conf
-    environment:
-      TZ: "Asia/Shanghai"
+      - ${PWD}/example-config:/usr/local/etc/redis
     command: ["redis-sentinel", "/usr/local/etc/redis/redis-sentinel.conf"]
 
 networks:
-  db:
+  default:
     external: true
     name: app

@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 
 x-base: &default-config
   restart: unless-stopped
@@ -14,21 +14,21 @@ x-base: &default-config
       max-size: '100m'
       max-file: '1'
   mem_swappiness: 0
+  env_file:
+      - .env
 
 services:
-  nifi:
-    image: apache/nifi:latest
-    container_name: nifi
+  # trino server
+  trino:
+    image: trinodb/trino:424
+    user: root
+    hostname: trino
     << : *default-config
     ports:
-      - 9090:9090
-    environment:
-      - NIFI_WEB_HTTP_PORT=9090
+      - 8080:8080
     volumes:
-      - /tmp/nifi:/tmp/nifi
+      - ${PWD}/config/trino/catalog:/etc/trino/catalog
+      - trino-data:/lakehouse/data
 
-networks:
-  default:
-    external: true
-    name: app
-
+volumes:
+  trino-data:

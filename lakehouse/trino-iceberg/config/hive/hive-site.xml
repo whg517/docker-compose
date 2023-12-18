@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+
+    <!-- ak 和 sk 可以有环境变量提供，参见 https://hadoop.apache.org/docs/r3.1.2/hadoop-aws/tools/hadoop-aws/index.html#Authenticating_via_the_AWS_Environment_Variables -->
+    <!-- <property>
+        <name>fs.s3a.access.key</name>
+        <description>AWS access key ID.
+            Omit for IAM role-based or provider-based authentication.</description>
+    </property>
+
+    <property>
+        <name>fs.s3a.secret.key</name>
+        <description>AWS secret key.
+            Omit for IAM role-based or provider-based authentication.</description>
+    </property> -->
+
+    <property>
+        <name>fs.s3a.connection.maximum</name>
+        <value>15</value>
+        <description>Controls the maximum number of simultaneous connections to S3.</description>
+    </property>
+
+    <property>
+        <name>fs.s3a.connection.ssl.enabled</name>
+        <value>false</value>
+        <description>Enables or disables SSL connections to S3.</description>
+    </property>
+
+    <property>
+        <name>fs.s3a.endpoint</name>
+        <value>http://minio:9000</value>
+        <description>AWS S3 endpoint to connect to. An up-to-date list is
+            provided in the AWS Documentation: regions and endpoints. Without this
+            property, the standard region (s3.amazonaws.com) is assumed.
+        </description>
+    </property>
+
+    <property>
+        <name>fs.s3a.endpoint.region</name>
+        <value>us-east-1</value>
+        <description>AWS S3 region for a bucket, which bypasses the parsing of
+            fs.s3a.endpoint to know the region. Would be helpful in avoiding errors
+            while using privateLink URL and explicitly set the bucket region.
+            If set to a blank string (or 1+ space), falls back to the
+            (potentially brittle) SDK region resolution process.
+        </description>
+    </property>
+
+    <property>
+        <name>fs.s3a.path.style.access</name>
+        <value>true</value>
+        <description>Enable S3 path style access ie disabling the default virtual hosting behaviour.
+            Useful for S3A-compliant storage providers as it removes the need to set up DNS for
+            virtual hosting.
+        </description>
+    </property>
+
+    <property>
+        <name>fs.s3a.impl</name>
+        <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>
+        <description>The implementation class of the S3A Filesystem</description>
+    </property>
+
+    <property>
+        <name>fs.AbstractFileSystem.s3a.impl</name>
+        <value>org.apache.hadoop.fs.s3a.S3A</value>
+        <description>The implementation class of the S3A AbstractFileSystem.</description>
+    </property>
+
+
+</configuration>

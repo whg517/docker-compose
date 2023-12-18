@@ -16,19 +16,22 @@ x-base: &default-config
   mem_swappiness: 0
 
 services:
-  nifi:
-    image: apache/nifi:latest
-    container_name: nifi
+  alist:
     << : *default-config
-    ports:
-      - 9090:9090
-    environment:
-      - NIFI_WEB_HTTP_PORT=9090
+    container_name: alist
+    hostname: alist
     volumes:
-      - /tmp/nifi:/tmp/nifi
+    - '/data/docker/alist:/opt/alist/data'
+    ports:
+    - '5244:5244'
+    environment:
+    - PUID=0
+    - PGID=0
+    - UMASK=022
+
+    image: 'xhofe/alist:latest'
 
 networks:
   default:
-    external: true
-    name: app
-
+    external:
+      name: app

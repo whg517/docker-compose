@@ -1,0 +1,27 @@
+# CHANGELOG
+
+## 2023-08-25
+
+### 新增
+
+- alist
+- aria2
+- caddy
+- lakehouse
+  - trino-iceberg
+- mariadb
+- minio
+- mysql
+- postgres
+- wiki.js
+
+### 变更
+
+- 将 compose 版本升级到 3.9
+- 为 compose 中的服务添加优化参数，并使用 yaml 的锚点引用
+- 统一数据挂载目录为 `/data/docker/<service>` ，例如 `/data/docker/aria2` 。
+
+### 其他
+
+- 更新 README.md ，增加对一些服务的介绍
+- 增加 CHANGELOG.md ，记录变更

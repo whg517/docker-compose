@@ -1,0 +1,64 @@
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  env_file:
+      - .env
+
+services:
+  # pg server
+  postgres:
+    image: postgres:15.4
+    << : *default-config
+    hostname: postgres
+    # ports:
+    #   - '127.0.0.1:5432:5432'
+    # environment:
+    #   POSTGRES_PASSWORD: postgres
+    #   POSTGRES_USER: postgres
+    #   POSTGRES_DB: postgres
+    volumes:
+      - lakehouse-postgres:/var/lib/postgresql/data
+
+  # hive-metastore server
+  metastore:
+    image: apache/hive:4.0.0-beta-1
+    depends_on:
+      - postgres
+    << : *default-config
+    hostname: metastore
+    environment:
+      DB_DRIVER: postgres
+      AWS_ACCESS_KEY_ID: ${LAKEHOUSE_USER}
+      AWS_SECRET_ACCESS_KEY: ${LAKEHOUSE_PASSWORD}
+      AWS_DEFAULT_REGION: us-east-1
+      SERVICE_NAME: 'metastore -hiveconf hive.root.logger=INFO,console'
+      SERVICE_OPTS: '-Xmx1G -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
+                     -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+                     -Djavax.jdo.option.ConnectionUserName=${POSTGRES_USER}
+                     -Djavax.jdo.option.ConnectionPassword=${POSTGRES_PASSWORD}
+                     '
+    # ports:
+    #   - '127.0.0.1:9083:9083'
+    volumes:
+      - lakehouse-hive-jars:/opt/hive/lib
+      - type: bind
+        source: ${PWD}/config/hive/hive-site.xml
+        target: /opt/hive/conf/hive-site.xml
+        read_only: true
+
+volumes:
+  lakehouse-hive-jars:
+  lakehouse-postgres:
