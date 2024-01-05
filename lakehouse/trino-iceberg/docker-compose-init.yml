@@ -1,17 +1,30 @@
 version: '3.9'
 
 services:
-  # use gradle as init container to download hive jars
+  # use gradle as init container to download pg jar for hive metastore
   # https://stackoverflow.com/a/32402694/11722440
   metastore-init-jars-download:
     image: gradle:8
     restart: on-failure
     volumes:
-      - type: volume
-        source: hive-jars
-        target: /jars
+      - hive-jars:/jars
+      - gradle-cache:/home/gradle/.gradle/
       - type: bind  # 使用 bind 挂载单个文件到容器中
         source: ${PWD}/config/hive/build.gradle
+        target: /home/gradle/build.gradle
+    command: |
+      bash -c '
+      gradle download
+      '
+
+  trino-init-jars-download:
+    image: gradle:8
+    restart: on-failure
+    volumes:
+      - trino-jars:/jars
+      - gradle-cache:/home/gradle/.gradle/
+      - type: bind  # 使用 bind 挂载单个文件到容器中
+        source: ${PWD}/config/trino/build.gradle
         target: /home/gradle/build.gradle
     command: |
       bash -c '
@@ -31,8 +44,23 @@ services:
       cp -R /opt/hive/lib/* /jars
       '
 
+  # due to mount volume will override the original content, so we need to copy the jars to another volume
+  # and then mount the volume to trino container
+  trino-init-jars-merge:
+    image: trinodb/trino:424
+    restart: on-failure
+    user: root
+    volumes:
+      - type: volume
+        source: trino-jars
+        target: /jars
+    entrypoint: |
+      bash -c '
+      cp /usr/lib/trino/plugin/iceberg/* /jars
+      '
+
   # minio s3 init
-  minio-s3-init:
+  minio-init:
     image: quay.io/minio/minio:RELEASE.2023-08-16T20-17-30Z
     restart: on-failure
     env_file:
@@ -46,19 +74,7 @@ services:
       /minio-init.sh
       '
 
-  trino-init-catalog:
-    image: debian:latest
-    restart: on-failure
-    user: root
-    env_file:
-      - .env
-    volumes:
-      - ${PWD}/config/trino/catalog:/catalog:rw
-    command: |
-      bash -c '
-      sed -i "s/\(^hive.s3.aws-access-key=\).*$/\1${LAKEHOUSE_USER}/" /catalog/iceberg.properties
-      sed -i "s/\(^hive.s3.aws-secret-key=\).*$/\1${LAKEHOUSE_PASSWORD}/" /catalog/iceberg.properties
-      '
-
 volumes:
   hive-jars:
+  trino-jars:
+  gradle-cache:

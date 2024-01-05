@@ -24,11 +24,18 @@ services:
     user: root
     hostname: trino
     << : *default-config
+    environment:
+      AWS_ACCESS_KEY_ID: ${LAKEHOUSE_USER}
+      AWS_SECRET_ACCESS_KEY: ${LAKEHOUSE_PASSWORD}
+      AWS_S3_ENDPOINT: http://minio:9000
+      AWS_DEFAULT_REGION: us-east-1
     ports:
       - 8080:8080
     volumes:
       - ${PWD}/config/trino/catalog:/etc/trino/catalog
       - trino-data:/lakehouse/data
+      - trino-iceberg-jars:/usr/lib/trino/plugin/iceberg
 
 volumes:
   trino-data:
+  trino-iceberg-jars:

@@ -46,14 +46,14 @@ mkdir -p config/trino/catalog
 
 cat <<\EOF > config/trino/catalog/iceberg.properties
 connector.name=iceberg
-iceberg.catalog.type=hive_metastore
 hive.metastore.uri=thrift://metastore:9083
-hive.s3.aws-access-key=trino
-hive.s3.aws-secret-key=iNAMZLtirahV
-hive.s3.endpoint=http://minio:9000
+iceberg.catalog.type=hive_metastore
 hive.s3.path-style-access=true
+hive.s3.endpoint=http://minio:9000
 hive.s3.ssl.enabled=false
 hive.s3.region=us-east-1
+# hive.s3.aws-access-key=trino
+# hive.s3.aws-secret-key=iNAMZLtirahV
 
 EOF
 
@@ -136,7 +136,7 @@ cat > config/hive/hive-site.xml <<EOF
 EOF
 
 cat > config/hive/build.gradle <<EOF
-apply plugin: 'base'
+apply plugin: 'java'
 
 repositories {
     maven { url 'https://maven.aliyun.com/repository/public/' }
@@ -144,20 +144,17 @@ repositories {
     mavenCentral()
 }
 
-configurations {
-    toCopy
-}
-
 dependencies {
-    toCopy 'org.postgresql:postgresql:42.6.0'
-    toCopy 'org.apache.hadoop:hadoop-aws:3.3.1'
-    toCopy 'org.apache.hadoop:hadoop-client:3.3.1'
+    implementation 'org.postgresql:postgresql:42.6.0'
+    implementation 'org.apache.hadoop:hadoop-aws:3.3.1'
+    implementation 'org.apache.hadoop:hadoop-client:3.3.1'
 }
 
 task download(type: Copy) {
-    from configurations.toCopy 
-    into '/jars'
+    from configurations.runtimeClasspath
+    into "/jars"
 }
+
 EOF
 
 mkdir -p scripts
@@ -235,33 +232,47 @@ chmod +x scripts/minio-init.sh
 
 cat > docker-compose-minio.yml <<\EOF
 version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  env_file:
+      - .env
+
 services:
   minio:
     image: quay.io/minio/minio:RELEASE.2023-08-16T20-17-30Z
+    << : *default-config
     command: server /data --console-address ":9001"
     hostname: minio
-    # ports:
-    #   - 127.0.0.1:9000:9000
-    #   - 127.0.0.1:9001:9001
-    env_file:
-      - .env
+    ports:
+      - 127.0.0.1:9000:9000
+      - 127.0.0.1:9001:9001
     volumes:
       - lakehouse-minio:/data
     # environment:
       # MINIO_ROOT_USER: minioadmin
       # MINIO_ROOT_PASSWORD: minioadmin
     healthcheck:
-      test: 
-        - "CMD"
-        - "curl"
-        - "-f"
-        - "http://localhost:9000/minio/health/live"
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
 
 volumes:
   lakehouse-minio:
+
 EOF
 
 docker compose -f docker-compose-minio.yml up -d
@@ -275,17 +286,30 @@ cat <<\EOF > docker-compose-init.yml
 version: '3.9'
 
 services:
-  # use gradle as init container to download hive jars
+  # use gradle as init container to download pg jar for hive metastore
   # https://stackoverflow.com/a/32402694/11722440
   metastore-init-jars-download:
     image: gradle:8
     restart: on-failure
     volumes:
-      - type: volume
-        source: lakehouse-hive-jars
-        target: /jars
+      - hive-jars:/jars
+      - gradle-cache:/home/gradle/.gradle/
       - type: bind  # 使用 bind 挂载单个文件到容器中
         source: ${PWD}/config/hive/build.gradle
+        target: /home/gradle/build.gradle
+    command: |
+      bash -c '
+      gradle download
+      '
+
+  trino-init-jars-download:
+    image: gradle:8
+    restart: on-failure
+    volumes:
+      - trino-jars:/jars
+      - gradle-cache:/home/gradle/.gradle/
+      - type: bind  # 使用 bind 挂载单个文件到容器中
+        source: ${PWD}/config/trino/build.gradle
         target: /home/gradle/build.gradle
     command: |
       bash -c '
@@ -299,14 +323,29 @@ services:
     restart: on-failure
     user: root
     volumes:
-      - lakehouse-hive-jars:/jars:rw
+      - hive-jars:/jars:rw
     entrypoint: |
       bash -c '
       cp -R /opt/hive/lib/* /jars
       '
 
+  # due to mount volume will override the original content, so we need to copy the jars to another volume
+  # and then mount the volume to trino container
+  trino-init-jars-merge:
+    image: trinodb/trino:424
+    restart: on-failure
+    user: root
+    volumes:
+      - type: volume
+        source: trino-jars
+        target: /jars
+    entrypoint: |
+      bash -c '
+      cp /usr/lib/trino/plugin/iceberg/* /jars
+      '
+
   # minio s3 init
-  minio-s3-init:
+  minio-init:
     image: quay.io/minio/minio:RELEASE.2023-08-16T20-17-30Z
     restart: on-failure
     env_file:
@@ -320,22 +359,11 @@ services:
       /minio-init.sh
       '
 
-  trino-init-catalog:
-    image: debian:latest
-    restart: on-failure
-    user: root
-    env_file:
-      - .env
-    volumes:
-      - ${PWD}/config/trino/catalog:/catalog:rw
-    command: |
-      bash -c '
-      sed -i "s/\(^hive.s3.aws-access-key=\).*$/\1${LAKEHOUSE_USER}/" /catalog/iceberg.properties
-      sed -i "s/\(^hive.s3.aws-secret-key=\).*$/\1${LAKEHOUSE_PASSWORD}/" /catalog/iceberg.properties
-      '
-
 volumes:
-  lakehouse-hive-jars:
+  hive-jars:
+  trino-jars:
+  gradle-cache:
+
 EOF
 
 docker compose -f docker-compose-init.yml up
@@ -346,14 +374,30 @@ docker compose -f docker-compose-init.yml up
 ```bash
 cat <<\EOF > docker-compose-hive.yml
 version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  env_file:
+      - .env
+
 services:
   # pg server
   postgres:
     image: postgres:15.4
-    restart: unless-stopped
+    << : *default-config
     hostname: postgres
-    env_file:
-      - .env
     # ports:
     #   - '127.0.0.1:5432:5432'
     # environment:
@@ -361,18 +405,15 @@ services:
     #   POSTGRES_USER: postgres
     #   POSTGRES_DB: postgres
     volumes:
-      - lakehouse-postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
 
   # hive-metastore server
   metastore:
     image: apache/hive:4.0.0-beta-1
-    # user: root
     depends_on:
       - postgres
-    restart: unless-stopped
+    << : *default-config
     hostname: metastore
-    env_file:
-      - .env
     environment:
       DB_DRIVER: postgres
       AWS_ACCESS_KEY_ID: ${LAKEHOUSE_USER}
@@ -387,15 +428,18 @@ services:
     # ports:
     #   - '127.0.0.1:9083:9083'
     volumes:
-      - lakehouse-hive-jars:/opt/hive/lib
+      - hive-jars:/opt/hive/lib
+      - hive-data:/opt/hive/data
       - type: bind
         source: ${PWD}/config/hive/hive-site.xml
         target: /opt/hive/conf/hive-site.xml
         read_only: true
 
 volumes:
-  lakehouse-hive-jars:
-  lakehouse-postgres:
+  hive-data:
+  hive-jars:
+  postgres-data:
+
 EOF
 
 docker compose -f docker-compose-hive.yml up -d
@@ -408,22 +452,46 @@ docker compose -f docker-compose-hive.yml up -d
 cat <<'EOF' > docker-compose-trino.yml
 version: '3.9'
 
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  env_file:
+      - .env
+
 services:
   # trino server
   trino:
     image: trinodb/trino:424
+    user: root
     hostname: trino
-    restart: unless-stopped
-    env_file:
-      - .env
-    # ports:
-    #   - 127.0.0.1:8080:8080
+    << : *default-config
+    environment:
+      AWS_ACCESS_KEY_ID: ${LAKEHOUSE_USER}
+      AWS_SECRET_ACCESS_KEY: ${LAKEHOUSE_PASSWORD}
+      AWS_S3_ENDPOINT: http://minio:9000
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - 8080:8080
     volumes:
       - ${PWD}/config/trino/catalog:/etc/trino/catalog
-      - trino-data:/var/trino/data
+      - trino-data:/lakehouse/data
+      - trino-iceberg-jars:/usr/lib/trino/plugin/iceberg
 
 volumes:
   trino-data:
+  trino-iceberg-jars:
+
 EOF
 
 docker compose -f docker-compose-trino.yml up -d
@@ -476,16 +544,34 @@ ref: <https://min.io/docs/minio/linux/reference/minio-mc-admin.html#command-mc.a
 
 ```yml
 version: "3.9"
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  env_file:
+      - .env
+
 services:
   minio:
     image: quay.io/minio/minio:RELEASE.2023-08-16T20-17-30Z
+    << : *default-config
     command: server /data --console-address ":9001"
     hostname: minio
-    # ports:
-    #   - 127.0.0.1:9000:9000
-    #   - 127.0.0.1:9001:9001
-    env_file:
-      - .env
+    ports:
+      - 127.0.0.1:9000:9000
+      - 127.0.0.1:9001:9001
     volumes:
       - lakehouse-minio:/data
     # environment:
@@ -499,6 +585,7 @@ services:
 
 volumes:
   lakehouse-minio:
+
 ```
 
 **配置环境变量:**
@@ -707,7 +794,7 @@ ref: [How can I use Gradle to just download JARs?](https://stackoverflow.com/a/3
 创建 `config/hive/build.gradle` 文件，并增加如下内容。
 
 ```groovy
-apply plugin: 'base'
+apply plugin: 'java'
 
 repositories {
     maven { url 'https://maven.aliyun.com/repository/public/' }
@@ -715,20 +802,17 @@ repositories {
     mavenCentral()
 }
 
-configurations {
-    toCopy
-}
-
 dependencies {
-    toCopy 'org.postgresql:postgresql:42.6.0'
-    toCopy 'org.apache.hadoop:hadoop-aws:3.3.1'
-    toCopy 'org.apache.hadoop:hadoop-client:3.3.1'
+    implementation 'org.postgresql:postgresql:42.6.0'
+    implementation 'org.apache.hadoop:hadoop-aws:3.3.1'
+    implementation 'org.apache.hadoop:hadoop-client:3.3.1'
 }
 
 task download(type: Copy) {
-    from configurations.toCopy 
-    into '/jars'
+    from configurations.runtimeClasspath
+    into "/jars"
 }
+
 ```
 
 创建 `docker-compose-init-hive.yml` 文件，增加如下内容。
@@ -737,15 +821,14 @@ task download(type: Copy) {
 version: '3.9'
 
 services:
-  # use gradle as init container to download hive jars
+  # use gradle as init container to download pg jar for hive metastore
   # https://stackoverflow.com/a/32402694/11722440
   metastore-init-jars-download:
     image: gradle:8
     restart: on-failure
     volumes:
-      - type: volume
-        source: lakehouse-hive-jars
-        target: /jars
+      - hive-jars:/jars
+      - gradle-cache:/home/gradle/.gradle/
       - type: bind  # 使用 bind 挂载单个文件到容器中
         source: ${PWD}/config/hive/build.gradle
         target: /home/gradle/build.gradle
@@ -761,14 +844,14 @@ services:
     restart: on-failure
     user: root
     volumes:
-      - lakehouse-hive-jars:/jars:rw
+      - hive-jars:/jars:rw
     entrypoint: |
       bash -c '
       cp -R /opt/hive/lib/* /jars
       '
 
 volumes:
-  lakehouse-hive-jars:
+  hive-jars:
 ```
 
 执行：
@@ -885,14 +968,31 @@ POSTGRES_PASSWORD=hive
 
 ```yaml
 version: "3.9"
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+  env_file:
+      - .env
+
 services:
   # pg server
   postgres:
     image: postgres:15.4
-    restart: unless-stopped
+    << : *default-config
     hostname: postgres
-    env_file:
-      - .env
     # ports:
     #   - '127.0.0.1:5432:5432'
     # environment:
@@ -900,18 +1000,15 @@ services:
     #   POSTGRES_USER: postgres
     #   POSTGRES_DB: postgres
     volumes:
-      - lakehouse-postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
 
   # hive-metastore server
   metastore:
     image: apache/hive:4.0.0-beta-1
-    # user: root
     depends_on:
       - postgres
-    restart: unless-stopped
+    << : *default-config
     hostname: metastore
-    env_file:
-      - .env
     environment:
       DB_DRIVER: postgres
       AWS_ACCESS_KEY_ID: ${LAKEHOUSE_USER}
@@ -926,15 +1023,18 @@ services:
     # ports:
     #   - '127.0.0.1:9083:9083'
     volumes:
-      - lakehouse-hive-jars:/opt/hive/lib
+      - hive-jars:/opt/hive/lib
+      - hive-data:/opt/hive/data
       - type: bind
         source: ${PWD}/config/hive/hive-site.xml
         target: /opt/hive/conf/hive-site.xml
         read_only: true
 
 volumes:
-  lakehouse-hive-jars:
-  lakehouse-postgres:
+  hive-data:
+  hive-jars:
+  postgres-data:
+
 ```
 
 这个配置文件中有几个点需要强调一下：
@@ -960,14 +1060,15 @@ docker compose -f docker-compose-hive.yml up -d
 
 ```ini
 connector.name=iceberg
-iceberg.catalog.type=hive_metastore
 hive.metastore.uri=thrift://metastore:9083
-hive.s3.aws-access-key=trino
-hive.s3.aws-secret-key=iNAMZLtirahV
-hive.s3.endpoint=http://minio:9000
+iceberg.catalog.type=hive_metastore
 hive.s3.path-style-access=true
+hive.s3.endpoint=http://minio:9000
 hive.s3.ssl.enabled=false
 hive.s3.region=us-east-1
+# hive.s3.aws-access-key=trino
+# hive.s3.aws-secret-key=iNAMZLtirahV
+
 ```
 
 #### 创建 docker-compose 文件
@@ -1231,3 +1332,28 @@ INSERT INTO example_table VALUES (1, 'Alice', 32), (2, 'Bob', 28);
 
 SELECT * FROM example_table;
 ```
+
+### 测试
+
+```bash
+trino --catalog iceberg --debug
+trino --catalog hive --debug
+```
+
+```sql
+CREATE SCHEMA iceberg_test;
+USE iceberg_test;
+CREATE TABLE iceberg_t2 (name varchar, age int, id int)
+    WITH (location = 'alluxio://trino-iceberg-master-1:19998/lake-house/iceberg_t2', format = 'parquet');
+
+CREATE TABLE iceberg_s3_t1 (name varchar, age int, id int)
+    WITH (location = 's3a://lake-house/data/iceberg_s3_t1', format = 'parquet');
+
+CREATE SCHEMA hive_test;
+USE hive_test;
+CREATE TABLE hive_t1 (name varchar, age int, id int)
+    WITH (external_location = 's3a://lake-house/hive_t1', format = 'parquet');
+
+CREATE SCHEMA hive_s3_schema
+WITH (location = 's3a://lake-house/hive-schema/');
+``

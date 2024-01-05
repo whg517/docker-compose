@@ -20,7 +20,8 @@ services:
     image: mongo:7.0.2
     container_name: mongodb
     << : *default-config
-    # environment:
+    environment:
+      MONGO_INITDB_DATABASE: rs0
     #   MONGO_INITDB_ROOT_USERNAME: admin
     #   MONGO_INITDB_ROOT_PASSWORD: admin
     ports:

@@ -2,7 +2,8 @@
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
 
-    <!-- ak 和 sk 可以有环境变量提供，参见 https://hadoop.apache.org/docs/r3.1.2/hadoop-aws/tools/hadoop-aws/index.html#Authenticating_via_the_AWS_Environment_Variables -->
+    <!-- ak 和 sk 可以有环境变量提供，参见
+    https://hadoop.apache.org/docs/r3.1.2/hadoop-aws/tools/hadoop-aws/index.html#Authenticating_via_the_AWS_Environment_Variables -->
     <!-- <property>
         <name>fs.s3a.access.key</name>
         <description>AWS access key ID.
@@ -14,7 +15,15 @@
         <description>AWS secret key.
             Omit for IAM role-based or provider-based authentication.</description>
     </property> -->
-
+    <!-- <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>/opt/hive/data</value>
+        <description>location of default database for the warehouse</description>
+    </property> -->
+    <!-- <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>s3://lake-house/</value>
+    </property> -->
     <property>
         <name>fs.s3a.connection.maximum</name>
         <value>15</value>
@@ -67,6 +76,5 @@
         <value>org.apache.hadoop.fs.s3a.S3A</value>
         <description>The implementation class of the S3A AbstractFileSystem.</description>
     </property>
-
 
 </configuration>

@@ -30,7 +30,7 @@ services:
     #   POSTGRES_USER: postgres
     #   POSTGRES_DB: postgres
     volumes:
-      - lakehouse-postgres:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
 
   # hive-metastore server
   metastore:
@@ -53,12 +53,14 @@ services:
     # ports:
     #   - '127.0.0.1:9083:9083'
     volumes:
-      - lakehouse-hive-jars:/opt/hive/lib
+      - hive-jars:/opt/hive/lib
+      - hive-data:/opt/hive/data
       - type: bind
         source: ${PWD}/config/hive/hive-site.xml
         target: /opt/hive/conf/hive-site.xml
         read_only: true
 
 volumes:
-  lakehouse-hive-jars:
-  lakehouse-postgres:
+  hive-data:
+  hive-jars:
+  postgres-data:
