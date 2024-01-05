@@ -4,3 +4,5 @@
 proxy/config.json
 
 **/local*
+
+**/.gradle

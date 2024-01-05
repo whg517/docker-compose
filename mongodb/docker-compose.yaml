@@ -17,7 +17,7 @@ x-base: &default-config
 
 services:
   mongodb:
-    image: mongo:latest
+    image: mongo:7.0.2
     container_name: mongodb
     << : *default-config
     # environment:
@@ -28,12 +28,9 @@ services:
     volumes:
       - ${PWD}/scripts:/docker-entrypoint-initdb.d/
       - /data/docker/mongodb/data:/data/db
-    # command:
-    #   - '-f'
-    #   - '/etc/mongod.conf'
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
 
 networks:
   default:
-    external:
-      name: db
+    name: db
+    external: true
