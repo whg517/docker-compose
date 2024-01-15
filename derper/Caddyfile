@@ -1,0 +1,24 @@
+{
+    log {
+        output stdout
+        format console
+    }
+}
+
+{$DERP_DOMAIN} {
+    log {
+        output stdout
+        format console
+    }
+    route /.well-known/* {
+        root * /data/wwwroot/{$DERP_DOMAIN}/
+        file_server
+    }
+    reverse_proxy / http://derper {
+        header_up X-Forwarded-For {remote_host}
+        header_up Host {host}
+        transport http {
+            versions 1.1
+        }
+    }
+}

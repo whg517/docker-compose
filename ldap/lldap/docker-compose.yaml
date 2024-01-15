@@ -1,0 +1,47 @@
+version: '3.9'
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+
+volumes:
+  lldap_data:
+
+services:
+  lldap:
+    image: lldap/lldap:stable
+    << : *default-config
+    ports:
+      # For LDAP
+      - "3890:3890"
+      # For LDAPS (LDAP Over SSL), enable port if LLDAP_LDAPS_OPTIONS__ENABLED set true, look env below
+      #- "6360:6360"
+      # For the web front-end
+      - "17170:17170"
+    volumes:
+      - "lldap_data:/data"
+      # Alternatively, you can mount a local folder
+      # - "./lldap_data:/data"
+    environment:
+      - TZ=Asia/Shanghai
+      - LLDAP_JWT_SECRET=foo
+      - LLDAP_LDAP_USER_PASS="11111111"
+      - LLDAP_LDAP_BASE_DN=dc=example,dc=com
+      # If using LDAPS, set enabled true and configure cert and key path
+      # - LLDAP_LDAPS_OPTIONS__ENABLED=true
+      # - LLDAP_LDAPS_OPTIONS__CERT_FILE=/path/to/certfile.crt
+      # - LLDAP_LDAPS_OPTIONS__KEY_FILE=/path/to/keyfile.key
+      # You can also set a different database:
+      # - LLDAP_DATABASE_URL=mysql://mysql-user:password@mysql-server/my-database
+      # - LLDAP_DATABASE_URL=postgres://postgres-user:password@postgres-server/my-database
