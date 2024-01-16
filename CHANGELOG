@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 2024-01-15
+
+### 新增
+
+- authentik
+- derper
+- lldap
+- windmall
+
+### 变更
+
+- 更新 trino-iceberg 内容
+
 ## 2023-08-25
 
 ### 新增

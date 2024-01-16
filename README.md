@@ -67,6 +67,7 @@ https://github.com/whg517/docker-compose.git
 ## 已有服务
 
 - [alist](https://alist.nn.ci/)：一个可以连接多种后端存储用来做网盘的开源项目
+- [derper](https://github.com/fredliang44/derper-docker) 启动自己的 tailscale
 - Elastic APM
 - [aria2](https://aria2.github.io/)：一个突破单线程下载的下载工具，通过油猴脚本可以突破百度云限速
 - [caddy](https://caddyserver.com/docs/)：一个使用 go 开发的代理服务器，本地运行可以将某个目录作为文件服务器在内网共享
@@ -77,6 +78,8 @@ https://github.com/whg517/docker-compose.git
 - kafka
 - lakehouse
   - trino-iceberg：基于docker实现的 pg+minio+trino+iceberg 的湖仓方案，详细文档已完成
+- ldap
+  - [lldap](https://github.com/lldap/lldap) 一个轻量 ldap 服务，并且自带 UI 管理界面
 - logstach
 - mariadb
 - minio
@@ -96,6 +99,7 @@ https://github.com/whg517/docker-compose.git
 - sonarqube
 - splash
 - [wiki.js](https://js.wiki/)：一个轻量的文档管理系统，可以用来做个人 wiki
+- windmall
 
 ## 注意
 
