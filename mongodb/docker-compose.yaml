@@ -16,20 +16,19 @@ x-base: &default-config
   mem_swappiness: 0
 
 services:
-  mongodb:
-    image: mongo:7.0.2
-    container_name: mongodb
+  mongo-rs-1:
+    image: mongo:7
     << : *default-config
     environment:
-      MONGO_INITDB_DATABASE: rs0
+      MONGO_INITDB_DATABASE: test
     #   MONGO_INITDB_ROOT_USERNAME: admin
     #   MONGO_INITDB_ROOT_PASSWORD: admin
     ports:
       - 27017:27017
     volumes:
-      - ${PWD}/scripts:/docker-entrypoint-initdb.d/
+    #   - ${PWD}/scripts:/docker-entrypoint-initdb.d/
       - /data/docker/mongodb/data:/data/db
-    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    # command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
 
 networks:
   default:

@@ -1,0 +1,78 @@
+version: "3.9"
+
+x-base: &default-config
+  restart: unless-stopped
+  ulimits:
+    nproc: 65535
+    nofile:
+      soft: 20000
+      hard: 40000
+  stop_grace_period: 1m
+  logging:
+    driver: json-file
+    options:
+      max-size: '100m'
+      max-file: '1'
+  mem_swappiness: 0
+
+services:
+  mongo-rs-1:
+    image: mongo:7
+    << : *default-config
+    environment:
+      MONGO_INITDB_DATABASE: test
+    #   MONGO_INITDB_ROOT_USERNAME: admin
+    #   MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - 27017:27017
+    volumes:
+      - /data/docker/mongodb/data:/data/db
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+
+  mongo-rs-2:
+    image: mongo:7
+    << : *default-config
+    environment:
+      MONGO_INITDB_DATABASE: test
+    #   MONGO_INITDB_ROOT_USERNAME: admin
+    #   MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - 27018:27017
+    volumes:
+      - /data/docker/mongodb/data2:/data/db
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+
+  mongo-rs-3:
+    image: mongo:7
+    << : *default-config
+    environment:
+      MONGO_INITDB_DATABASE: test
+    #   MONGO_INITDB_ROOT_USERNAME: admin
+    #   MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - 27019:27017
+    volumes:
+      - /data/docker/mongodb/data3:/data/db
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+
+  mongo-init:
+    image: mongo:7
+    restart: "on-failure"
+    command:
+      - mongosh
+      - mongodb://mongo-rs-1:27017
+      - --eval
+      - |
+        rs.initiate({
+          _id: "rs0",
+          members: [
+            { _id: 0, host: "mongo-rs-1:27017" },
+            { _id: 0, host: "mongo-rs-2:27017" },
+            { _id: 0, host: "mongo-rs-3:27017" },
+          ]
+        })
+
+networks:
+  default:
+    name: db
+    external: true
