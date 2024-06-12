@@ -25,7 +25,7 @@ services:
       bootstrap.memory_lock: "true"
       ES_JAVA_OPTS: -Xms512m -Xmx512m
       transport.host: 127.0.0.1  # https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html#dev-vs-prod-mode
-      xpack.security.enabled: false
+      xpack.security.enabled: "false"
     volumes:
       - /data/docker/es7:/usr/share/elasticsearch/data
     ports:
@@ -41,7 +41,7 @@ services:
     environment:
       ELASTICSEARCH_HOSTS: http://es7:9200
       i18n.locale: zh-CN
-      xpack.security.enabled: false
+      xpack.security.enabled: "false"
     ports:
       - 5601:5601
     networks:
