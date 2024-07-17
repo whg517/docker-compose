@@ -10,15 +10,20 @@
         output stdout
         format console
     }
-    route /.well-known/* {
+    @notWellKnown {
+        not path /.well-known/*
+    }
+    handle @notWellKnown {
+        reverse_proxy http://derper {
+            header_up Host {http.reverse_proxy.upstream.hostport}
+            header_up X-Real-IP {http.request.remote.host}
+            header_up X-Forwarded-For {http.request.remote.host}
+            header_up X-Forwarded-Proto {http.request.scheme}
+            header_up Referer {http.request.uri}
+        }
+    }
+    handle_path /.well-known/* {
         root * /data/wwwroot/{$DERP_DOMAIN}/
         file_server
-    }
-    reverse_proxy / http://derper {
-        header_up X-Forwarded-For {remote_host}
-        header_up Host {host}
-        transport http {
-            versions 1.1
-        }
     }
 }
