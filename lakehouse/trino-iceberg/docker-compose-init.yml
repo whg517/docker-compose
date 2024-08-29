@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # use gradle as init container to download pg jar for hive metastore
   # https://stackoverflow.com/a/32402694/11722440
@@ -47,7 +45,7 @@ services:
   # due to mount volume will override the original content, so we need to copy the jars to another volume
   # and then mount the volume to trino container
   trino-init-jars-merge:
-    image: trinodb/trino:424
+    image: trinodb/trino:452
     restart: on-failure
     user: root
     volumes:
@@ -57,6 +55,20 @@ services:
     entrypoint: |
       bash -c '
       cp /usr/lib/trino/plugin/iceberg/* /jars
+      '
+
+  init-certs:
+    image: rockylinux/rockylinux:9
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ${PWD}/scripts/init-certs.sh
+        target: /init-certs.sh
+      - certs:/certs
+    entrypoint: |
+      bash -c '
+      cd /certs
+      /init-certs.sh
       '
 
   # minio s3 init
@@ -77,4 +89,5 @@ services:
 volumes:
   hive-jars:
   trino-jars:
+  certs:
   gradle-cache:

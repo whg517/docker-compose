@@ -1,5 +1,3 @@
-version: '3.9'
-
 x-base: &default-config
   restart: unless-stopped
   ulimits:
@@ -23,6 +21,7 @@ services:
     image: trinodb/trino:424
     user: root
     hostname: trino
+    domainname: trino.example.com
     << : *default-config
     environment:
       AWS_ACCESS_KEY_ID: ${LAKEHOUSE_USER}
@@ -31,6 +30,7 @@ services:
       AWS_DEFAULT_REGION: us-east-1
     ports:
       - 8080:8080
+      - 8443:8443
     volumes:
       - ${PWD}/config/trino/catalog:/etc/trino/catalog
       - trino-data:/lakehouse/data

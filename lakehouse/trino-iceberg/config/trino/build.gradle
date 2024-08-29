@@ -6,10 +6,12 @@ repositories {
     mavenCentral()
 }
 
+// https://iceberg.apache.org/docs/1.5.1/aws/
+// https://iceberg.apache.org/docs/1.5.1/aws/#hadoop-s3a-filesystem
 dependencies {
     implementation 'org.postgresql:postgresql:42.6.0'
-    implementation 'org.apache.hadoop:hadoop-aws:3.3.1'
-    implementation 'org.apache.hadoop:hadoop-client:3.3.1'
+    implementation 'org.apache.iceberg:iceberg-aws-bundle:1.5.2'
+    implementation 'org.apache.iceberg:iceberg-spark-runtime-3.4_2.12:1.5.2'
 }
 
 task download(type: Copy) {
