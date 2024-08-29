@@ -31,15 +31,22 @@ hive 的 jar 。
 ```bash
 # 创建 .env 环境变量文件，用于环境变量共享，同时不应被 git 追踪，避免机密信息泄漏
 cat <<'EOF' > .env
+
+## Minio user
 MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=minioadmin
+MINIO_TRINO_USERNAME=trino
+MINIO_TRINO_PASSWORD=dHJpbm8gLW4K
 
-LAKEHOUSE_USER=trino
-LAKEHOUSE_PASSWORD=iNAMZLtirahV
-
+## Postgres user
 POSTGRES_DB=metastore_db
 POSTGRES_USER=hive
-POSTGRES_PASSWORD=hive
+POSTGRES_PASSWORD="aGl2ZSAtbgo="
+
+## Trino config
+# openssl rand 512 | base64
+TRINO_SHARED_SECRET=trino_shared_secret
+
 EOF
 
 mkdir -p config/trino/catalog
