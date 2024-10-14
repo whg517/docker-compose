@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-base: &default-config
   restart: unless-stopped
   ulimits:
@@ -17,7 +15,7 @@ x-base: &default-config
 
 services:
   mongo-rs-1:
-    image: mongo:7
+    image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
     << : *default-config
     environment:
       MONGO_INITDB_DATABASE: test
@@ -26,11 +24,11 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - /data/docker/mongodb/data:/data/db
+      - /data/docker/mongodb/rs/data:/data/db
     command: ["--replSet", "rs0", "--bind_ip_all"]
 
   mongo-rs-2:
-    image: mongo:7
+    image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
     << : *default-config
     environment:
       MONGO_INITDB_DATABASE: test
@@ -39,11 +37,11 @@ services:
     ports:
       - 27018:27017
     volumes:
-      - /data/docker/mongodb/data2:/data/db
+      - /data/docker/mongodb/rs/data2:/data/db
     command: ["--replSet", "rs0", "--bind_ip_all"]
 
   mongo-rs-3:
-    image: mongo:7
+    image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
     << : *default-config
     environment:
       MONGO_INITDB_DATABASE: test
@@ -52,11 +50,11 @@ services:
     ports:
       - 27019:27017
     volumes:
-      - /data/docker/mongodb/data3:/data/db
+      - /data/docker/mongodb/rs/data3:/data/db
     command: ["--replSet", "rs0", "--bind_ip_all"]
 
   mongo-init:
-    image: mongo:7
+    image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
     restart: "on-failure"
     command:
       - mongosh
@@ -67,8 +65,8 @@ services:
           _id: "rs0",
           members: [
             { _id: 0, host: "mongo-rs-1:27017" },
-            { _id: 0, host: "mongo-rs-2:27017" },
-            { _id: 0, host: "mongo-rs-3:27017" },
+            { _id: 1, host: "mongo-rs-2:27017" },
+            { _id: 2, host: "mongo-rs-3:27017" },
           ]
         })
 

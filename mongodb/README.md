@@ -1,6 +1,8 @@
 # mongo
 
-ref: <https://www.cnblogs.com/ricklz/p/13237419.html>
+- ref: <https://www.mongodb.com/resources/products/compatibilities/docker>
+- ref: <https://quay.io/repository/mongodb/mongodb-community-server?tab=tags>
+- ref: <https://www.cnblogs.com/ricklz/p/13237419.html>
 
 ## 生产环境副本集
 
