@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-base: &default-config
   restart: unless-stopped
   ulimits:
@@ -17,7 +15,7 @@ x-base: &default-config
 
 services:
   mongo-rs-1:
-    image: mongo:7
+    image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
     << : *default-config
     environment:
       MONGO_INITDB_DATABASE: test
