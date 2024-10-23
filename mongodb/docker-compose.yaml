@@ -14,7 +14,7 @@ x-base: &default-config
   mem_swappiness: 0
 
 services:
-  mongo-rs-1:
+  mongo-1:
     image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
     << : *default-config
     environment:
@@ -24,9 +24,7 @@ services:
     ports:
       - 27017:27017
     volumes:
-    #   - ${PWD}/scripts:/docker-entrypoint-initdb.d/
       - /data/docker/mongodb/data:/data/db
-    # command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
 
 networks:
   default:

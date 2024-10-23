@@ -9,66 +9,85 @@ x-base: &default-config
   logging:
     driver: json-file
     options:
-      max-size: '100m'
+      max-size: '200m'
       max-file: '1'
   mem_swappiness: 0
 
+x-service: &service-config
+  << : *default-config
+  image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
+  # environment:
+  #   MONGO_INITDB_ROOT_USERNAME: username
+  #   MONGO_INITDB_ROOT_PASSWORD: password
+  command:
+    - mongod
+    - --bind_ip_all
+    - --replSet
+    - rs0
+    # - --keyFile
+    # - /etc/mongodb/keyfile
+
+# Note:
+#
+# Config DNS to resolve mongo.example.com to public ip,
+# e.g. your host machine ip or cloud server public ip.
+#
+# If enable auth, set mongo root credential and
+# exec `openssl rand -base64 756 > keyfile` to init mongodb keyfile for replica set.
+#
+
 services:
   mongo-rs-1:
-    image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
-    << : *default-config
-    environment:
-      MONGO_INITDB_DATABASE: test
-    #   MONGO_INITDB_ROOT_USERNAME: admin
-    #   MONGO_INITDB_ROOT_PASSWORD: admin
+    << : *service-config
     ports:
       - 27017:27017
     volumes:
-      - /data/docker/mongodb/rs/data:/data/db
-    command: ["--replSet", "rs0", "--bind_ip_all"]
+      - mongo-rs-1:/data/db
+      # - ${PWD}/keyfile:/etc/mongodb/keyfile
 
   mongo-rs-2:
-    image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
-    << : *default-config
-    environment:
-      MONGO_INITDB_DATABASE: test
-    #   MONGO_INITDB_ROOT_USERNAME: admin
-    #   MONGO_INITDB_ROOT_PASSWORD: admin
+    << : *service-config
     ports:
       - 27018:27017
     volumes:
-      - /data/docker/mongodb/rs/data2:/data/db
-    command: ["--replSet", "rs0", "--bind_ip_all"]
+      - mongo-rs-2:/data/db
+      # - ${PWD}/keyfile:/etc/mongodb/keyfile
 
   mongo-rs-3:
-    image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
-    << : *default-config
-    environment:
-      MONGO_INITDB_DATABASE: test
-    #   MONGO_INITDB_ROOT_USERNAME: admin
-    #   MONGO_INITDB_ROOT_PASSWORD: admin
+    << : *service-config
     ports:
       - 27019:27017
     volumes:
-      - /data/docker/mongodb/rs/data3:/data/db
-    command: ["--replSet", "rs0", "--bind_ip_all"]
+      - mongo-rs-3:/data/db
+      # - ${PWD}/keyfile:/etc/mongodb/keyfile
 
   mongo-init:
     image: quay.io/mongodb/mongodb-community-server:7.0.1-ubi9
     restart: "on-failure"
+    depends_on:
+      - mongo-rs-1
     command:
       - mongosh
-      - mongodb://mongo-rs-1:27017
+      - mongodb://mongo.example.com:27017
       - --eval
       - |
-        rs.initiate({
-          _id: "rs0",
-          members: [
-            { _id: 0, host: "mongo-rs-1:27017" },
-            { _id: 1, host: "mongo-rs-2:27017" },
-            { _id: 2, host: "mongo-rs-3:27017" },
-          ]
-        })
+        try {
+          rs.status()
+        } catch (e) {
+          rs.initiate({
+            _id: "rs0",
+            members: [
+              { _id: 0, host: "mongo.example.com:27017" },
+              { _id: 1, host: "mongo.example.com:27018" },
+              { _id: 2, host: "mongo.example.com:27019" },
+            ]
+          })
+        }
+
+volumes:
+  mongo-rs-1:
+  mongo-rs-2:
+  mongo-rs-3:
 
 networks:
   default:
